@@ -24,20 +24,24 @@ func TestDrawLineStraight(t *testing.T) {
 	drawing.DrawLine(line, white)
 	errorMessage := ""
 
+	y := 100
+	for x := bounds.Min.X; x < bounds.Max.Y; x++ {
+		col := drawing.Img.At(x, y)
+		if col != white {
+			if col == black {
+				t.Fatalf("Color did not change at [%d;%d]", x, y)
+			} else {
+				t.Fatalf("Unexpected color at [%d;%d]. Expected: %v. Got: %v", x, y, white, col)
+			}
+		}
+	}
+
 	if drawing.Img.At(0, 0) != black {
 		errorMessage += fmt.Sprintf("[%d;%d] Color should not change. New color: \n", 0, 0)
 	}
 
 	if drawing.Img.At(bounds.Dy(), bounds.Dx()) != black {
 		errorMessage += fmt.Sprintf("[%d;%d] Color should not change. New color: \n", bounds.Dy(), bounds.Dx())
-	}
-
-	if drawing.Img.At(line.Start.X, line.Start.Y) != white {
-		errorMessage += fmt.Sprintf("[%d;%d] invalid color change: %v\n", line.Start.X, line.Start.Y, drawing.Img.At(line.Start.X, line.Start.Y))
-	}
-
-	if drawing.Img.At(line.End.X, line.End.Y) != white {
-		errorMessage += fmt.Sprintf("[%d;%d] invalid color change: %v\n", line.End.X, line.End.Y, drawing.Img.At(line.End.X, line.End.Y))
 	}
 
 	if errorMessage != "" {
@@ -57,26 +61,24 @@ func TestDrawLineDiagonal(t *testing.T) {
 	}
 
 	drawing.DrawLine(line, white)
-	errorMessage := ""
 
-	if drawing.Img.At(0, 0) != white {
-		errorMessage += fmt.Sprintf("[%d;%d] invalid color change: %v\n", 0, 0, drawing.Img.At(0, 0))
+	x := 0
+	for y := bounds.Min.Y; y < bounds.Max.Y; y += 1 {
+		x += bounds.Dx() / bounds.Dy()
+		col := drawing.Img.At(x, y)
+		if col == white {
+			continue
+		}
+		if col == black {
+			t.Fatalf("[%d;%d] color did not change", x, y)
+		}
+		t.Fatalf("[%d;%d] invalid color change: %v", 0, 0, col)
+
 	}
 
-	if drawing.Img.At(bounds.Dy()-1, bounds.Dx()-1) != white {
-		errorMessage += fmt.Sprintf("[%d;%d] invalid color change: %v\n", bounds.Dy()-1, bounds.Dx()-1, drawing.Img.At(bounds.Dy()-1, bounds.Dx()-1))
-	}
-
-	if drawing.Img.At(bounds.Dx()-1, 0) != black {
-		errorMessage += fmt.Sprintf("[%d;%d] color should not change. New color: %v\n", bounds.Dx()-1, 0, drawing.Img.At(bounds.Dx()-1, 0))
-	}
-
-	if drawing.Img.At(0, bounds.Dy()-1) != black {
-		errorMessage += fmt.Sprintf("[%d;%d] color should not change. New color: %v\n", 0, bounds.Dy()-1, drawing.Img.At(0, bounds.Dy()-1))
-	}
-
-	if errorMessage != "" {
-		t.Fatalf("Input data: %v black image \nLine: %v \nErrors: \n%s", bounds, line, errorMessage)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y += bounds.Dy() / bounds.Dx() {
+		for x := bounds.Min.X; x < bounds.Max.X; x += bounds.Dx() / bounds.Dx() {
+		}
 	}
 }
 
@@ -143,6 +145,15 @@ func TestDrawLineZeroThickness(t *testing.T) {
 }
 
 func TestDrawLineGradientHorizontal(t *testing.T) {
+	// white := getWhite()
+	// drawing := getBlackDrawing()
+	// bounds := drawing.Img.Bounds()
+	// line := pattern.Line{
+	// 	Start:     image.Point{0, 0},
+	// 	End:       image.Point{bounds.Dx(), bounds.Dy()},
+	// 	Thickness: 0,
+	// }
+	// drawing.DrawLine(line, white)
 }
 
 func TestDrawLineGradientVertical(t *testing.T) {
