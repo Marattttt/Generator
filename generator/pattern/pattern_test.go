@@ -180,10 +180,10 @@ func getBlackDrawing() pattern.Drawing {
 	return drawing
 }
 
-func getWhite() color.RGBA {
-	return color.RGBA{255, 255, 255, 255}
+func getWhite() pattern.Color {
+	return pattern.Color{color.RGBA{255, 255, 255, 255}}
 }
 
-func getBlack() color.RGBA {
-	return color.RGBA{0, 0, 0, 255}
+func getBlack() pattern.Color {
+	return pattern.Color{color.RGBA{0, 0, 0, 255}}
 }
