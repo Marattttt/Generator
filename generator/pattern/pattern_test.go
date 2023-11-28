@@ -1,7 +1,6 @@
 package pattern_test
 
 import (
-	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -10,42 +9,120 @@ import (
 	"github.com/marattttt/paperwork/generator/pattern"
 )
 
-func TestDrawLineStraight(t *testing.T) {
+func TestColorConvert(t *testing.T) {
+	white := getWhite()
+	patternWhite := pattern.ColorFromCColor(white)
+
+	r, g, b, a := white.RGBA()
+	r1, g1, b1, a1 := patternWhite.RGBA()
+	if r != r1 || g != g1 || b != b1 || a != a1 {
+		t.Fatalf("Cannot convert white %v, got %v", []uint32{r, g, b, a}, []uint32{r1, g1, b1, a1})
+	}
+
+	black := getBlack()
+	patternBlack := pattern.ColorFromCColor(black)
+	r, g, b, a = black.RGBA()
+	r1, g1, b1, a1 = patternBlack.RGBA()
+	if r != r1 || g != g1 || b != b1 || a != a1 {
+		t.Fatalf("Cannot convert black %v, got %v", []uint32{r, g, b, a}, []uint32{r1, g1, b1, a1})
+	}
+}
+
+func TestGradientFromColor(t *testing.T) {
+	white := getWhite()
+	gradient := pattern.ColorFromCColor(white).GetGradient()
+
+	if len(*&gradient.Marks) != 2 {
+		t.Fatalf("Invalid length of plain color gradient. \nColor: %v; \ngradient: %v", white, gradient)
+	}
+
+	if gradient.Marks[0].Position != 0 || gradient.Marks[1].Position != 100 {
+		t.Fatalf("Invalid positions of marks in plain color gradient %v", gradient)
+	}
+
+	if gradient.Marks[0].Col != gradient.Marks[1].Col {
+		t.Fatalf("Colors don't match for a plain color gradient %v", gradient)
+	}
+	if gradient.Marks[0].Col != pattern.ColorFromCColor(white) {
+		t.Fatalf("Invalid colors in plain color gradient. \nExpected: %v; \nGot: %v", white, gradient.Marks[0].Col)
+	}
+}
+
+// TODO: write these
+func TestAddNewMarkToGradient(t *testing.T) {
+}
+
+func TestEditGradientMark(t *testing.T) {
+}
+
+func TestAddMarkToEmptyGradient(t *testing.T) {
+}
+
+func TestDrawLineHorizontal(t *testing.T) {
 	white := getWhite()
 	black := getBlack()
 	drawing := getBlackDrawing()
 	bounds := drawing.Img.Bounds()
 	line := pattern.Line{
 		Start:     image.Point{0, 100},
-		End:       image.Point{bounds.Dx(), 100},
+		End:       image.Point{bounds.Dx() - 1, 100},
 		Thickness: 3,
 	}
 
-	drawing.DrawLine(line, white)
-	errorMessage := ""
+	drawing.DrawLine(line, pattern.ColorFromCColor(white))
 
-	y := 100
-	for x := bounds.Min.X; x < bounds.Max.Y; x++ {
-		col := drawing.Img.At(x, y)
-		if col != white {
-			if col == black {
-				t.Fatalf("Color did not change at [%d;%d]", x, y)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			col := drawing.Img.At(x, y)
+
+			if y >= 99 && y <= 101 {
+				if col != white {
+					if col == black {
+						t.Fatalf("Color did not change at [%d;%d]", x, y)
+					} else {
+						t.Fatalf("Unexpected color at [%d;%d]. Expected: %v. Got: %v", x, y, white, col)
+					}
+				}
 			} else {
-				t.Fatalf("Unexpected color at [%d;%d]. Expected: %v. Got: %v", x, y, white, col)
+				if col != black {
+					t.Fatalf("Color should not change at [%d;%d]", x, y)
+				}
 			}
 		}
 	}
+}
 
-	if drawing.Img.At(0, 0) != black {
-		errorMessage += fmt.Sprintf("[%d;%d] Color should not change. New color: \n", 0, 0)
+func TestDrawLineVertical(t *testing.T) {
+	white := getWhite()
+	black := getBlack()
+	drawing := getBlackDrawing()
+	bounds := drawing.Img.Bounds()
+	line := pattern.Line{
+		Start:     image.Point{200, 0},
+		End:       image.Point{200, 200},
+		Thickness: 3,
 	}
 
-	if drawing.Img.At(bounds.Dy(), bounds.Dx()) != black {
-		errorMessage += fmt.Sprintf("[%d;%d] Color should not change. New color: \n", bounds.Dy(), bounds.Dx())
-	}
+	drawing.DrawLine(line, pattern.ColorFromCColor(white))
 
-	if errorMessage != "" {
-		t.Fatalf("Input data: %v black image \nLine: %v \nErrors: \n%s", bounds, line, errorMessage)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			col := drawing.Img.At(x, y)
+
+			if x >= 199 && x <= 201 {
+				if col != white {
+					if col == black {
+						t.Fatalf("Color did not change at [%d;%d]", x, y)
+					} else {
+						t.Fatalf("Unexpected color at [%d;%d]. Expected: %v. Got: %v", x, y, white, col)
+					}
+				}
+			} else {
+				if col != black {
+					t.Fatalf("Color should not change at [%d;%d]", x, y)
+				}
+			}
+		}
 	}
 }
 
@@ -60,7 +137,7 @@ func TestDrawLineDiagonal(t *testing.T) {
 		Thickness: 3,
 	}
 
-	drawing.DrawLine(line, white)
+	drawing.DrawLine(line, pattern.ColorFromCColor(white))
 
 	x := 0
 	for y := bounds.Min.Y; y < bounds.Max.Y; y += 1 {
@@ -92,7 +169,7 @@ func TestDrawLineOutOfBounds(t *testing.T) {
 		End:       image.Point{2000, 2000},
 		Thickness: 1,
 	}
-	drawing.DrawLine(line, white)
+	drawing.DrawLine(line, pattern.ColorFromCColor(white))
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -112,7 +189,7 @@ func TestDrawLineThick(t *testing.T) {
 		End:       image.Point{bounds.Dx(), bounds.Dy()},
 		Thickness: 10000,
 	}
-	drawing.DrawLine(line, white)
+	drawing.DrawLine(line, pattern.ColorFromCColor(white))
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -133,7 +210,7 @@ func TestDrawLineZeroThickness(t *testing.T) {
 		End:       image.Point{bounds.Dx(), bounds.Dy()},
 		Thickness: 0,
 	}
-	drawing.DrawLine(line, white)
+	drawing.DrawLine(line, pattern.ColorFromCColor(white))
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -144,46 +221,19 @@ func TestDrawLineZeroThickness(t *testing.T) {
 	}
 }
 
-func TestDrawLineGradientHorizontal(t *testing.T) {
-	// white := getWhite()
-	// drawing := getBlackDrawing()
-	// bounds := drawing.Img.Bounds()
-	// line := pattern.Line{
-	// 	Start:     image.Point{0, 0},
-	// 	End:       image.Point{bounds.Dx(), bounds.Dy()},
-	// 	Thickness: 0,
-	// }
-	// drawing.DrawLine(line, white)
-}
-
-func TestDrawLineGradientVertical(t *testing.T) {
-}
-
-func TestDrawLineGradientOutOfBounds(t *testing.T) {
-}
-
-func TestAddNewMarkToGradient(t *testing.T) {
-}
-
-func TestEditGradientMark(t *testing.T) {
-}
-
-func TestAddMarkToEmptyGradient(t *testing.T) {
-}
-
 // Creates a 200 x 100 black drawing
 func getBlackDrawing() pattern.Drawing {
 	drawing := pattern.Drawing{
-		Img: image.NewRGBA(image.Rect(0, 0, 200, 100)),
+		Img: image.NewRGBA(image.Rect(0, 0, 400, 200)),
 	}
 	draw.Draw(drawing.Img, drawing.Img.Bounds(), &image.Uniform{color.Black}, image.Point{}, draw.Src)
 	return drawing
 }
 
-func getWhite() pattern.Color {
-	return pattern.Color{color.RGBA{255, 255, 255, 255}}
+func getWhite() color.Color {
+	return color.RGBA{255, 255, 255, 255}
 }
 
-func getBlack() pattern.Color {
-	return pattern.Color{color.RGBA{0, 0, 0, 255}}
+func getBlack() color.Color {
+	return color.RGBA{0, 0, 0, 255}
 }
