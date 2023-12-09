@@ -341,8 +341,8 @@ func (d *Drawing) drawVertical(line Line, grad Gradienter) {
 	yEnd = min(bounds.Max.Y, yEnd)
 
 	xStartOffset, xEndOffset := getThicknessOffsets(line.Thickness)
-	xStart := line.Start.Y + xStartOffset
-	xEnd := line.End.Y + xEndOffset
+	xStart := line.Start.X + xStartOffset
+	xEnd := line.End.X + xEndOffset
 
 	// Cut off unneeded part
 	xStart = max(bounds.Min.X, xStart)
@@ -358,7 +358,7 @@ func (d *Drawing) drawVertical(line Line, grad Gradienter) {
 	} else {
 		for y := yStart; y <= yEnd; y++ {
 			for x := xStart; x < xEnd; x++ {
-				mark := gradient.GetMark(xStart, xEnd, x)
+				mark := gradient.GetMark(yStart, yEnd, y)
 				d.Img.Set(x, y, mark.Col)
 			}
 		}

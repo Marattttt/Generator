@@ -203,7 +203,7 @@ func TestDrawLineZeroThickness(t *testing.T) {
 	bounds := drawing.Img.Bounds()
 	line := pattern.Line{
 		Start:     image.Point{0, 0},
-		End:       image.Point{bounds.Dx(), bounds.Dy()},
+		End:       image.Point{0, bounds.Dy()},
 		Thickness: 0,
 	}
 	drawing.DrawLine(line, pattern.ColorFromCColor(white))
@@ -211,7 +211,7 @@ func TestDrawLineZeroThickness(t *testing.T) {
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			if drawing.Img.At(x, y) != black {
-				t.Fatalf("0 thickness line should not change an image")
+				t.Fatalf("[%d;%d] - a zero thickness line should not change an image", x, y)
 			}
 		}
 	}
