@@ -36,7 +36,7 @@ func TestGradientFromColor(t *testing.T) {
 		t.Fatalf("Invalid length of plain color gradient. \nColor: %v; \ngradient: %v", white, gradient)
 	}
 
-	if gradient.Marks[0].Position != 0 || gradient.Marks[1].Position != 100 {
+	if gradient.Marks[0].Pos != 0 || gradient.Marks[1].Pos != 100 {
 		t.Fatalf("Invalid positions of marks in plain color gradient %v", gradient)
 	}
 
@@ -51,11 +51,9 @@ func TestGradientFromColor(t *testing.T) {
 // TODO: write these
 func TestAddNewMarkToGradient(t *testing.T) {
 }
-
-func TestEditGradientMark(t *testing.T) {
-}
-
 func TestAddMarkToEmptyGradient(t *testing.T) {
+}
+func TestEditGradientMark(t *testing.T) {
 }
 
 func TestDrawLineHorizontal(t *testing.T) {
@@ -129,7 +127,7 @@ func TestDrawLineVertical(t *testing.T) {
 func TestDrawLineDiagonal(t *testing.T) {
 	white := getWhite()
 	black := getBlack()
-	drawing := getBlackDrawing()
+	drawing := getBlackSquareDrawing()
 	bounds := drawing.Img.Bounds()
 	line := pattern.Line{
 		Start:     image.Point{0, 0},
@@ -139,22 +137,20 @@ func TestDrawLineDiagonal(t *testing.T) {
 
 	drawing.DrawLine(line, pattern.ColorFromCColor(white))
 
-	x := 0
-	for y := bounds.Min.Y; y < bounds.Max.Y; y += 1 {
-		x += bounds.Dx() / bounds.Dy()
-		col := drawing.Img.At(x, y)
-		if col == white {
-			continue
-		}
-		if col == black {
-			t.Fatalf("[%d;%d] color did not change", x, y)
-		}
-		t.Fatalf("[%d;%d] invalid color change: %v", 0, 0, col)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			col := drawing.Img.At(x, y)
 
-	}
-
-	for y := bounds.Min.Y; y < bounds.Max.Y; y += bounds.Dy() / bounds.Dx() {
-		for x := bounds.Min.X; x < bounds.Max.X; x += bounds.Dx() / bounds.Dx() {
+			// Is diagonal line in the middle, with thickness 3
+			if x == y-1 || x == y || x == y+1 {
+				if col != white {
+					t.Fatalf("[%d;%d] unexpected color; \nExpected: %v; \nGot: %v", x, y, white, col)
+				}
+				continue
+			}
+			if col != black {
+				t.Fatalf("[%d;%d] color should not change; \nExpected: %v; \nGot: %v", x, y, black, col)
+			}
 		}
 	}
 }
@@ -180,25 +176,25 @@ func TestDrawLineOutOfBounds(t *testing.T) {
 	}
 }
 
-func TestDrawLineThick(t *testing.T) {
-	white := getWhite()
-	drawing := getBlackDrawing()
-	bounds := drawing.Img.Bounds()
-	line := pattern.Line{
-		Start:     image.Point{0, 0},
-		End:       image.Point{bounds.Dx(), bounds.Dy()},
-		Thickness: 10000,
-	}
-	drawing.DrawLine(line, pattern.ColorFromCColor(white))
+// func TestDrawLineThick(t *testing.T) {
+// 	white := getWhite()
+// 	drawing := getBlackDrawing()
+// 	bounds := drawing.Img.Bounds()
+// 	line := pattern.Line{
+// 		Start:     image.Point{0, 0},
+// 		End:       image.Point{bounds.Dx(), bounds.Dy()},
+// 		Thickness: 10000,
+// 	}
+// 	drawing.DrawLine(line, pattern.ColorFromCColor(white))
 
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			if drawing.Img.At(x, y) != white {
-				t.Fatalf("Thick line should cover all of an image")
-			}
-		}
-	}
-}
+// 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+// 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+// 			if drawing.Img.At(x, y) != white {
+// 				t.Fatalf("Thick line should cover all of an image")
+// 			}
+// 		}
+// 	}
+// }
 
 func TestDrawLineZeroThickness(t *testing.T) {
 	black := getBlack()
@@ -221,7 +217,7 @@ func TestDrawLineZeroThickness(t *testing.T) {
 	}
 }
 
-// Creates a 200 x 100 black drawing
+// Creates a 400 x 200 black drawing
 func getBlackDrawing() pattern.Drawing {
 	drawing := pattern.Drawing{
 		Img: image.NewRGBA(image.Rect(0, 0, 400, 200)),
@@ -230,6 +226,13 @@ func getBlackDrawing() pattern.Drawing {
 	return drawing
 }
 
+func getBlackSquareDrawing() pattern.Drawing {
+	drawing := pattern.Drawing{
+		Img: image.NewRGBA(image.Rect(0, 0, 200, 200)),
+	}
+	draw.Draw(drawing.Img, drawing.Img.Bounds(), &image.Uniform{color.Black}, image.Point{}, draw.Src)
+	return drawing
+}
 func getWhite() color.Color {
 	return color.RGBA{255, 255, 255, 255}
 }

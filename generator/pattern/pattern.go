@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/draw"
+	"math"
 )
 
 type InvalidGradientMark error
@@ -42,6 +43,7 @@ func (c Color) GetGradient() *Gradient {
 	return &g
 }
 
+// Implements color.Color for Color
 func (c Color) RGBA() (r, g, b, a uint32) {
 	r = uint32(c.R)
 	g = uint32(c.G)
@@ -68,8 +70,8 @@ type Gradient struct {
 }
 
 type GradientMark struct {
-	Col      Color
-	Position float32
+	Col Color
+	Pos float32
 }
 
 func (g *Gradient) GetGradient() *Gradient {
@@ -84,11 +86,11 @@ func (g *Gradient) Mark(mark GradientMark) {
 	}
 
 	for i, m := range g.Marks {
-		if m.Position < mark.Position {
+		if m.Pos < mark.Pos {
 			continue
 		}
 
-		if m.Position == mark.Position {
+		if m.Pos == mark.Pos {
 			g.Marks[i] = mark
 			return
 		}
@@ -117,14 +119,12 @@ func (d *Drawing) DrawLine(line Line, grad Gradienter) {
 	} else if !isHorizontal && isVertical {
 		d.drawVertical(line, grad)
 	} else {
-		if !checkInBounds(d, line) {
-			return
-		}
+		d.drawDiagonal(line, grad)
 	}
 }
 
 // Assumes the gradient has at least 2 marks
-func (g *Gradient) getMark(start, end, pos int) GradientMark {
+func (g *Gradient) GetMark(start, end, pos int) GradientMark {
 	if pos <= start {
 		return g.Marks[0]
 	}
@@ -139,18 +139,18 @@ func (g *Gradient) getMark(start, end, pos int) GradientMark {
 	progress := float32(pos-start) / float32(end-start)
 
 	for i := 1; i < len(g.Marks); i++ {
-		if g.Marks[i-1].Position <= progress && g.Marks[i].Position >= progress {
+		if g.Marks[i-1].Pos <= progress && g.Marks[i].Pos >= progress {
 			left := g.Marks[i-1].Col
 			right := g.Marks[i].Col
 
-			resR := left.R + uint16(progress-g.Marks[i-1].Position*float32(right.R))
-			resG := left.G + uint16(progress-g.Marks[i-1].Position*float32(right.G))
-			resB := left.B + uint16(progress-g.Marks[i-1].Position*float32(right.B))
-			resA := left.A + uint16(progress-g.Marks[i-1].Position*float32(right.A))
+			resR := left.R + uint16(progress-g.Marks[i-1].Pos*float32(right.R))
+			resG := left.G + uint16(progress-g.Marks[i-1].Pos*float32(right.G))
+			resB := left.B + uint16(progress-g.Marks[i-1].Pos*float32(right.B))
+			resA := left.A + uint16(progress-g.Marks[i-1].Pos*float32(right.A))
 
 			return GradientMark{
-				Position: progress,
-				Col:      Color{resR, resG, resB, resA},
+				Pos: progress,
+				Col: Color{resR, resG, resB, resA},
 			}
 		}
 	}
@@ -158,84 +158,220 @@ func (g *Gradient) getMark(start, end, pos int) GradientMark {
 	return g.Marks[len(g.Marks)-1]
 }
 
+type skewedLine struct {
+	primaryStart, primaryEnd     int
+	secondaryStart, secondaryEnd int
+	thickness                    int
+	isSkewedX                    bool
+}
+
+func (l Line) toSkewed() skewedLine {
+	distY := math.Abs(float64(l.End.Y - l.Start.Y))
+	distX := math.Abs(float64(l.End.X - l.Start.X))
+
+	skewed := skewedLine{
+		isSkewedX: distX >= distY,
+		thickness: l.Thickness,
+	}
+
+	if skewed.isSkewedX {
+		skewed.primaryStart = min(l.Start.X, l.End.X)
+		skewed.primaryEnd = max(l.Start.X, l.End.X)
+		skewed.secondaryStart = min(l.Start.Y, l.End.Y)
+		skewed.primaryEnd = max(l.Start.Y, l.End.Y)
+	} else {
+		skewed.primaryStart = min(l.Start.Y, l.End.Y)
+		skewed.primaryEnd = max(l.Start.Y, l.End.Y)
+		skewed.secondaryStart = min(l.Start.X, l.End.X)
+		skewed.primaryEnd = max(l.Start.X, l.End.X)
+	}
+
+	return skewed
+}
+
+func (sl skewedLine) getOffsets() {
+
+}
+
 // Can be used to draw both horizontal and vertical lines,
 // but using their designated methods is advised
 func (d *Drawing) drawDiagonal(line Line, grad Gradienter) {
-	panic("NOT IMPLEMENTED!")
-	// bounds := d.Img.Bounds()
+	if !checkInBounds(d, line) {
+		return
+	}
+
+	// Points at which to increment/decrement secondary axis
+	breaks, _ := generateBreaks(line, d.Img.Bounds())
+
+	skewed := line.toSkewed()
+
+	d.drawDiagonalSkewed(skewed, grad, breaks)
 }
 
-// Ignores the Y values of start and end of line
+// Assumes the breaks refer to when to break drawing a line along the y axis
+func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, grad Gradienter, breaks []int) {
+	bounds := d.Img.Bounds()
+
+	startOffset, endOffset := getThicknessOffsets(skewed.thickness)
+
+	plainColor, isPlainColor := grad.(Color)
+	gradient := grad.GetGradient()
+	progressStart := skewed.primaryStart * skewed.secondaryStart
+	progressEnd := skewed.primaryEnd * skewed.primaryStart
+
+	prime := skewed.primaryStart
+	secondaryMiddle := skewed.secondaryStart
+	for _, br := range breaks {
+		secondaryStart := max(bounds.Min.X, secondaryMiddle+startOffset)
+		secondaryStart = min(secondaryStart, bounds.Max.X)
+
+		secondaryEnd := max(bounds.Min.X, secondaryMiddle+endOffset)
+		secondaryEnd = min(secondaryEnd, bounds.Max.X)
+
+		if isPlainColor {
+			var rect image.Rectangle
+			if skewed.isSkewedX {
+				rect = image.Rect(prime, secondaryStart, br, secondaryEnd)
+			} else {
+				rect = image.Rect(secondaryStart, prime, secondaryEnd, br)
+			}
+			draw.Draw(d.Img, rect, &image.Uniform{plainColor}, image.Point{}, draw.Src)
+		} else {
+			for ; prime < skewed.primaryEnd+endOffset && prime < br; prime++ {
+				for secondary := secondaryStart; secondary < secondaryEnd; secondary++ {
+					mark := gradient.GetMark(progressStart, progressEnd, prime*secondary)
+					if skewed.isSkewedX {
+						d.Img.Set(prime, secondary, mark.Col)
+					} else {
+						d.Img.Set(secondary, prime, mark.Col)
+					}
+				}
+			}
+		}
+		prime = br
+		secondaryMiddle++
+	}
+}
+
+func generateBreaks(line Line, rect image.Rectangle) (breaksAt []int, isXBreaks bool) {
+	drawSize := image.Rect(line.Start.X, line.Start.Y, line.End.X, line.End.Y).Size()
+
+	ratio := float64(drawSize.X) / float64(drawSize.Y)
+
+	length := drawSize.Y
+	isXBreaks = ratio >= 1
+	if isXBreaks {
+		length = drawSize.X
+	}
+
+	// Preallocate extra
+	// Converting ratio to int gives the maximum possible number of elements
+	// with as little extra space as possible
+	// (lowest is length/(int(ratio + 1) + 1))
+	breaks := make([]int, length/int(ratio)+1)
+	current := 0
+	remainder := float64(0)
+	br := 0
+	for ; br < len(breaks) && current < length; br++ {
+		current += int(ratio)
+		if remainder >= 0.5 {
+			current++
+			if remainder >= 1 {
+				remainder -= 1
+			}
+		}
+		// Add break
+		breaks[br] = current
+	}
+
+	// Remove extra elements
+	breaks = append(make([]int, 0), breaks[:br]...)
+
+	return breaks, isXBreaks
+
+}
+
 func (d *Drawing) drawHorizontal(line Line, grad Gradienter) {
 	bounds := d.Img.Bounds()
 
-	start := min(line.Start.X, line.End.X)
-	end := max(line.Start.X, line.End.X)
-
-	if start > bounds.Dx() {
-		return
-	}
+	xStart := min(line.Start.X, line.End.X)
+	xEnd := max(line.Start.X, line.End.X)
 
 	// Cut off unneeded part
-	if start < bounds.Min.X {
-		start = bounds.Min.X
-	}
-	if end > bounds.Max.X {
-		end = bounds.Max.X
-	}
+	xStart = max(bounds.Min.X, xStart)
+	xStart = min(bounds.Max.X, xStart)
+	xEnd = max(bounds.Min.X, xEnd)
+	xEnd = min(bounds.Max.X, xEnd)
 
-	yStart := line.Start.Y - line.Thickness/2
-	yEnd := line.Start.Y + line.Thickness/2
+	yStartOffset, yEndOffset := getThicknessOffsets(line.Thickness)
+	yStart := line.Start.Y + yStartOffset
+	yEnd := line.End.Y + yEndOffset
 
-	// If the thickness is even, the extra line is drawn on top
-	// That is, if a line starts at index 3:
-	// Thickness 3: 001110
-	// Thickness 4: 011110
-	if line.Thickness%2 == 0 {
-		yEnd--
-	}
+	// Cut off unneeded part
+	yStart = max(bounds.Min.Y, yStart)
+	yStart = min(bounds.Max.Y, yStart)
+	yEnd = max(bounds.Min.Y, yEnd)
+	yEnd = min(bounds.Max.Y, yEnd)
 
-	for y := yStart; y <= yEnd; y++ {
-		for x := start; x <= end; x++ {
-			mark := grad.GetGradient().getMark(start, end, x)
-			d.Img.Set(x, y, mark.Col)
+	plainCol, isPlainCol := grad.(Color)
+	gradient := grad.GetGradient()
+	if isPlainCol {
+		rect := image.Rect(xStart, yStart, xEnd, yEnd)
+		draw.Draw(d.Img, rect, &image.Uniform{plainCol}, image.Point{}, draw.Src)
+	} else {
+		for y := yStart; y <= yEnd; y++ {
+			for x := xStart; x < xEnd; x++ {
+				mark := gradient.GetMark(xStart, xEnd, x)
+				d.Img.Set(x, y, mark.Col)
+			}
 		}
 	}
 }
 
-// Ignores the X values of start and end of line
 func (d *Drawing) drawVertical(line Line, grad Gradienter) {
 	bounds := d.Img.Bounds()
 
-	// Color top to bottom
-	start := min(line.Start.Y, line.End.Y)
-	end := max(line.Start.Y, line.End.Y)
-
-	if start > bounds.Dy() {
-		return
-	}
+	yStart := min(line.Start.Y, line.End.Y)
+	yEnd := max(line.Start.Y, line.End.Y)
 
 	// Cut off unneeded part
-	start = max(start, bounds.Min.X)
-	end = min(end, bounds.Dy())
+	yStart = max(bounds.Min.Y, yStart)
+	yStart = min(bounds.Max.Y, yStart)
+	yEnd = max(bounds.Min.Y, yEnd)
+	yEnd = min(bounds.Max.Y, yEnd)
 
-	xStart := line.Start.X - line.Thickness/2
-	xEnd := line.Start.X + line.Thickness/2
+	xStartOffset, xEndOffset := getThicknessOffsets(line.Thickness)
+	xStart := line.Start.Y + xStartOffset
+	xEnd := line.End.Y + xEndOffset
 
-	// If the thickness is even, the extra line is drawn on the left
-	// That is, if a line starts at index 3:
-	// Thickness 3: 001110
-	// Thickness 4: 011110
-	if line.Thickness%2 == 0 {
-		xEnd--
-	}
+	// Cut off unneeded part
+	xStart = max(bounds.Min.X, xStart)
+	xStart = min(bounds.Max.X, xStart)
+	xEnd = max(bounds.Min.X, xEnd)
+	xEnd = min(bounds.Max.X, xEnd)
 
-	for x := xStart; x <= xEnd; x++ {
-		for y := start; y <= end; y++ {
-			mark := grad.GetGradient().getMark(start, end, y)
-			d.Img.Set(x, y, mark.Col)
+	plainCol, isPlainCol := grad.(Color)
+	gradient := grad.GetGradient()
+	if isPlainCol {
+		rect := image.Rect(xStart, yStart, xEnd, yEnd)
+		draw.Draw(d.Img, rect, &image.Uniform{plainCol}, image.Point{}, draw.Src)
+	} else {
+		for y := yStart; y <= yEnd; y++ {
+			for x := xStart; x < xEnd; x++ {
+				mark := gradient.GetMark(xStart, xEnd, x)
+				d.Img.Set(x, y, mark.Col)
+			}
 		}
 	}
+}
+
+func getThicknessOffsets(thickness int) (start, end int) {
+	startOffset := thickness / 2
+	endOffset := thickness / 2
+	if thickness%2 == 0 {
+		endOffset -= 1
+	}
+	return startOffset, endOffset
 }
 
 func checkInBounds(d *Drawing, line Line) bool {
