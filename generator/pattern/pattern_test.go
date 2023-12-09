@@ -63,7 +63,7 @@ func TestDrawLineHorizontal(t *testing.T) {
 	bounds := drawing.Img.Bounds()
 	line := pattern.Line{
 		Start:     image.Point{0, 100},
-		End:       image.Point{bounds.Dx() - 1, 100},
+		End:       image.Point{bounds.Max.X, 100},
 		Thickness: 3,
 	}
 
@@ -176,25 +176,25 @@ func TestDrawLineOutOfBounds(t *testing.T) {
 	}
 }
 
-// func TestDrawLineThick(t *testing.T) {
-// 	white := getWhite()
-// 	drawing := getBlackDrawing()
-// 	bounds := drawing.Img.Bounds()
-// 	line := pattern.Line{
-// 		Start:     image.Point{0, 0},
-// 		End:       image.Point{bounds.Dx(), bounds.Dy()},
-// 		Thickness: 10000,
-// 	}
-// 	drawing.DrawLine(line, pattern.ColorFromCColor(white))
+func TestDrawLineThick(t *testing.T) {
+	white := getWhite()
+	drawing := getBlackDrawing()
+	bounds := drawing.Img.Bounds()
+	line := pattern.Line{
+		Start:     image.Point{0, 0},
+		End:       image.Point{bounds.Dx(), bounds.Dy()},
+		Thickness: 10000,
+	}
+	drawing.DrawLine(line, pattern.ColorFromCColor(white))
 
-// 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-// 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-// 			if drawing.Img.At(x, y) != white {
-// 				t.Fatalf("Thick line should cover all of an image")
-// 			}
-// 		}
-// 	}
-// }
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			if drawing.Img.At(x, y) != white {
+				t.Fatalf("Thick line should cover all of an image")
+			}
+		}
+	}
+}
 
 func TestDrawLineZeroThickness(t *testing.T) {
 	black := getBlack()

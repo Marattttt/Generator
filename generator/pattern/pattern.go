@@ -292,10 +292,23 @@ func generateBreaks(line Line, rect image.Rectangle) (breaksAt []int, isXBreaks 
 }
 
 func (d *Drawing) drawHorizontal(line Line, grad Gradienter) {
+	if line.Thickness <= 0 {
+		return
+	}
+
 	bounds := d.Img.Bounds()
 
 	xStart := min(line.Start.X, line.End.X)
 	xEnd := max(line.Start.X, line.End.X)
+
+	// Line is to the left from the image
+	if xEnd < bounds.Min.X {
+		return
+	}
+	// Line is to the right from the image
+	if xStart > bounds.Max.X {
+		return
+	}
 
 	// Cut off unneeded part
 	xStart = max(bounds.Min.X, xStart)
@@ -307,6 +320,15 @@ func (d *Drawing) drawHorizontal(line Line, grad Gradienter) {
 	yStart := line.Start.Y + yStartOffset
 	yEnd := line.End.Y + yEndOffset
 
+	// Line is below the image
+	if yStart > bounds.Max.Y {
+		return
+	}
+	// Line is above the image
+	if yEnd < bounds.Min.Y {
+		return
+	}
+
 	// Cut off unneeded part
 	yStart = max(bounds.Min.Y, yStart)
 	yStart = min(bounds.Max.Y, yStart)
@@ -316,11 +338,14 @@ func (d *Drawing) drawHorizontal(line Line, grad Gradienter) {
 	plainCol, isPlainCol := grad.(Color)
 	gradient := grad.GetGradient()
 	if isPlainCol {
-		rect := image.Rect(xStart, yStart, xEnd, yEnd)
-		draw.Draw(d.Img, rect, &image.Uniform{plainCol}, image.Point{}, draw.Src)
+		for y := yStart; y <= yEnd; y++ {
+			for x := xStart; x <= xEnd; x++ {
+				d.Img.Set(x, y, plainCol)
+			}
+		}
 	} else {
 		for y := yStart; y <= yEnd; y++ {
-			for x := xStart; x < xEnd; x++ {
+			for x := xStart; x <= xEnd; x++ {
 				mark := gradient.GetMark(xStart, xEnd, x)
 				d.Img.Set(x, y, mark.Col)
 			}
@@ -329,6 +354,10 @@ func (d *Drawing) drawHorizontal(line Line, grad Gradienter) {
 }
 
 func (d *Drawing) drawVertical(line Line, grad Gradienter) {
+	if line.Thickness <= 0 {
+		return
+	}
+
 	bounds := d.Img.Bounds()
 
 	yStart := min(line.Start.Y, line.End.Y)
@@ -353,11 +382,14 @@ func (d *Drawing) drawVertical(line Line, grad Gradienter) {
 	plainCol, isPlainCol := grad.(Color)
 	gradient := grad.GetGradient()
 	if isPlainCol {
-		rect := image.Rect(xStart, yStart, xEnd, yEnd)
-		draw.Draw(d.Img, rect, &image.Uniform{plainCol}, image.Point{}, draw.Src)
+		for y := yStart; y <= yEnd; y++ {
+			for x := xStart; x <= xEnd; x++ {
+				d.Img.Set(x, y, plainCol)
+			}
+		}
 	} else {
 		for y := yStart; y <= yEnd; y++ {
-			for x := xStart; x < xEnd; x++ {
+			for x := xStart; x <= xEnd; x++ {
 				mark := gradient.GetMark(yStart, yEnd, y)
 				d.Img.Set(x, y, mark.Col)
 			}
@@ -365,8 +397,10 @@ func (d *Drawing) drawVertical(line Line, grad Gradienter) {
 	}
 }
 
+// gives a negative or zero offset for start and a positive or zero offset for end
+// usage: start += startOffset; end += endOffset
 func getThicknessOffsets(thickness int) (start, end int) {
-	startOffset := thickness / 2
+	startOffset := -thickness / 2
 	endOffset := thickness / 2
 	if thickness%2 == 0 {
 		endOffset -= 1
