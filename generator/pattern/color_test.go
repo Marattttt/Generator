@@ -7,7 +7,7 @@ import (
 )
 
 func TestColorConvert(t *testing.T) {
-	white := GetWhite()
+	white := getWhite()
 	patternWhite := pattern.ColorFromCColor(white)
 
 	r, g, b, a := white.RGBA()
@@ -16,7 +16,7 @@ func TestColorConvert(t *testing.T) {
 		t.Fatalf("Cannot convert white %v, got %v", []uint32{r, g, b, a}, []uint32{r1, g1, b1, a1})
 	}
 
-	black := GetBlack()
+	black := getBlack()
 	patternBlack := pattern.ColorFromCColor(black)
 	r, g, b, a = black.RGBA()
 	r1, g1, b1, a1 = patternBlack.RGBA()
@@ -26,7 +26,7 @@ func TestColorConvert(t *testing.T) {
 }
 
 func TestColorToGradient(t *testing.T) {
-	white := GetWhite()
+	white := getWhite()
 	gradient := pattern.ColorFromCColor(white).GetGradient()
 
 	if len(*&gradient.Marks) != 2 {

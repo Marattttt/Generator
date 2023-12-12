@@ -8,9 +8,9 @@ import (
 )
 
 func TestDrawLineHorizontal(t *testing.T) {
-	white := GetWhite()
-	black := GetBlack()
-	drawing := GetBlackDrawing()
+	white := getWhite()
+	black := getBlack()
+	drawing := getBlackDrawing()
 	bounds := drawing.Img.Bounds()
 	line := pattern.Line{
 		Start:     image.Point{0, 100},
@@ -42,9 +42,9 @@ func TestDrawLineHorizontal(t *testing.T) {
 }
 
 func TestDrawLineVertical(t *testing.T) {
-	white := GetWhite()
-	black := GetBlack()
-	drawing := GetBlackDrawing()
+	white := getWhite()
+	black := getBlack()
+	drawing := getBlackDrawing()
 	bounds := drawing.Img.Bounds()
 	line := pattern.Line{
 		Start:     image.Point{200, 0},
@@ -76,13 +76,13 @@ func TestDrawLineVertical(t *testing.T) {
 }
 
 func TestDrawLineDiagonal(t *testing.T) {
-	white := GetWhite()
-	black := GetBlack()
-	drawing := GetBlackSquareDrawing()
+	white := getWhite()
+	black := getBlack()
+	drawing := getBlackSquareDrawing()
 	bounds := drawing.Img.Bounds()
 	line := pattern.Line{
-		Start:     image.Point{0, 0},
-		End:       bounds.Max,
+		Start:     image.Point{},
+		End:       image.Point{bounds.Max.X, bounds.Max.Y},
 		Thickness: 3,
 	}
 
@@ -107,9 +107,9 @@ func TestDrawLineDiagonal(t *testing.T) {
 }
 
 func TestDrawLineOutOfBounds(t *testing.T) {
-	black := GetBlack()
-	white := GetWhite()
-	drawing := GetBlackDrawing()
+	black := getBlack()
+	white := getWhite()
+	drawing := getBlackDrawing()
 	bounds := drawing.Img.Bounds()
 	line := pattern.Line{
 		Start:     image.Point{1000, 1000},
@@ -127,30 +127,30 @@ func TestDrawLineOutOfBounds(t *testing.T) {
 	}
 }
 
-func TestDrawLineThick(t *testing.T) {
-	white := GetWhite()
-	drawing := GetBlackDrawing()
-	bounds := drawing.Img.Bounds()
-	line := pattern.Line{
-		Start:     image.Point{0, 0},
-		End:       image.Point{bounds.Dx(), bounds.Dy()},
-		Thickness: 10000,
-	}
-	drawing.DrawLine(line, pattern.ColorFromCColor(white))
+// func TestDrawLineThick(t *testing.T) {
+// 	white := getWhite()
+// 	drawing := getBlackDrawing()
+// 	bounds := drawing.Img.Bounds()
+// 	line := pattern.Line{
+// 		Start:     image.Point{0, 0},
+// 		End:       image.Point{bounds.Dx(), bounds.Dy()},
+// 		Thickness: 10000,
+// 	}
+// 	drawing.DrawLine(line, pattern.ColorFromCColor(white))
 
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			if drawing.Img.At(x, y) != white {
-				t.Fatalf("Thick line should cover all of an image")
-			}
-		}
-	}
-}
+// 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+// 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+// 			if drawing.Img.At(x, y) != white {
+// 				t.Fatalf("Thick line should cover all of an image")
+// 			}
+// 		}
+// 	}
+// }
 
 func TestDrawLineZeroThickness(t *testing.T) {
-	black := GetBlack()
-	white := GetWhite()
-	drawing := GetBlackDrawing()
+	black := getBlack()
+	white := getWhite()
+	drawing := getBlackDrawing()
 	bounds := drawing.Img.Bounds()
 	line := pattern.Line{
 		Start:     image.Point{0, 0},

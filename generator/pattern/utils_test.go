@@ -9,7 +9,7 @@ import (
 )
 
 // Creates a 400 x 200 black drawing
-func GetBlackDrawing() pattern.Drawing {
+func getBlackDrawing() pattern.Drawing {
 	drawing := pattern.Drawing{
 		Img: image.NewRGBA(image.Rect(0, 0, 400, 200)),
 	}
@@ -17,17 +17,18 @@ func GetBlackDrawing() pattern.Drawing {
 	return drawing
 }
 
-func GetBlackSquareDrawing() pattern.Drawing {
+func getBlackSquareDrawing() pattern.Drawing {
 	drawing := pattern.Drawing{
 		Img: image.NewRGBA(image.Rect(0, 0, 200, 200)),
 	}
 	draw.Draw(drawing.Img, drawing.Img.Bounds(), &image.Uniform{color.Black}, image.Point{}, draw.Src)
 	return drawing
 }
-func GetWhite() color.Color {
+
+func getWhite() color.Color {
 	return color.RGBA{255, 255, 255, 255}
 }
 
-func GetBlack() color.Color {
+func getBlack() color.Color {
 	return color.RGBA{0, 0, 0, 255}
 }

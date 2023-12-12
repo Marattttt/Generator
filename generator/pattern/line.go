@@ -21,8 +21,8 @@ type skewedLine struct {
 }
 
 func (l Line) toSkewed() skewedLine {
-	distY := math.Abs(float64(l.End.Y - l.Start.Y))
 	distX := math.Abs(float64(l.End.X - l.Start.X))
+	distY := math.Abs(float64(l.End.Y - l.Start.Y))
 
 	skewed := skewedLine{
 		isSkewedX: distX >= distY,
@@ -33,12 +33,12 @@ func (l Line) toSkewed() skewedLine {
 		skewed.primaryStart = min(l.Start.X, l.End.X)
 		skewed.primaryEnd = max(l.Start.X, l.End.X)
 		skewed.secondaryStart = min(l.Start.Y, l.End.Y)
-		skewed.primaryEnd = max(l.Start.Y, l.End.Y)
+		skewed.secondaryEnd = max(l.Start.Y, l.End.Y)
 	} else {
 		skewed.primaryStart = min(l.Start.Y, l.End.Y)
 		skewed.primaryEnd = max(l.Start.Y, l.End.Y)
 		skewed.secondaryStart = min(l.Start.X, l.End.X)
-		skewed.primaryEnd = max(l.Start.X, l.End.X)
+		skewed.secondaryEnd = max(l.Start.X, l.End.X)
 	}
 
 	return skewed

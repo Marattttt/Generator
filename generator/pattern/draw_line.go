@@ -1,7 +1,6 @@
 package pattern
 
 import (
-	"fmt"
 	"image"
 )
 
@@ -11,67 +10,37 @@ func (d *Drawing) drawDiagonal(line Line, grad Gradienter) {
 		return
 	}
 
-	// Points at which to increment/decrement secondary axis
-	breaks, _ := generateBreaks(line, d.Img.Bounds())
-
 	skewed := line.toSkewed()
-	fmt.Println(skewed)
 
-	d.drawDiagonalSkewed(skewed, grad, breaks)
+	d.drawDiagonalSkewed(skewed, grad)
 }
 
-func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, grad Gradienter, breaks []int) {
-	bounds := d.Img.Bounds()
-
+func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, grad Gradienter) {
 	startOffset, endOffset := getThicknessOffsets(skewed.thickness)
 
 	plainColor, isPlainColor := grad.(Color)
 	gradient := grad.GetGradient()
+
 	progressStart := skewed.primaryStart * skewed.secondaryStart
 	progressEnd := skewed.primaryEnd * skewed.primaryStart
 
-	prime := skewed.primaryStart
 	secondaryMiddle := skewed.secondaryStart
 
-	for _, br := range breaks {
-		if isPlainColor {
-			// fmt.Println(skewed.primaryStart, skewed.primaryEnd)
-			// fmt.Println(skewed.secondaryStart, skewed.secondaryEnd)
-			if skewed.isSkewedX {
-				for y := skewed.secondaryStart; y < skewed.secondaryEnd; y++ {
-					for x := skewed.primaryStart; x < skewed.primaryEnd; x++ {
-						d.Img.Set(x, y, plainColor)
-					}
-				}
+	for primary := skewed.primaryStart; primary < skewed.primaryEnd; primary++ {
+		for secondary := secondaryMiddle + startOffset; secondary <= secondaryMiddle+endOffset; secondary++ {
+			var col Color
+			if isPlainColor {
+				col = plainColor
 			} else {
-				for y := skewed.primaryStart; y < skewed.primaryEnd; y++ {
-					for x := skewed.secondaryStart; x < skewed.secondaryEnd; x++ {
-						fmt.Print(x, y)
-						d.Img.Set(x, y, plainColor)
-					}
-				}
+				col = gradient.GetMark(progressStart, progressEnd, primary*secondary).Col
 			}
 
-			continue
-		}
-		secondaryStart := max(bounds.Min.X, secondaryMiddle+startOffset)
-		secondaryStart = min(secondaryStart, bounds.Max.X)
-
-		secondaryEnd := max(bounds.Min.X, secondaryMiddle+endOffset)
-		secondaryEnd = min(secondaryEnd, bounds.Max.X)
-
-		for ; prime < skewed.primaryEnd+endOffset && prime < br; prime++ {
-			for secondary := secondaryStart; secondary < secondaryEnd; secondary++ {
-				mark := gradient.GetMark(progressStart, progressEnd, prime*secondary)
-				if skewed.isSkewedX {
-					d.Img.Set(prime, secondary, mark.Col)
-				} else {
-					d.Img.Set(secondary, prime, mark.Col)
-				}
+			if skewed.isSkewedX {
+				d.Img.Set(primary, secondary, col)
+			} else {
+				d.Img.Set(secondary, primary, col)
 			}
 		}
-
-		prime = br
 		secondaryMiddle++
 	}
 }
