@@ -5,7 +5,7 @@ import (
 	"image/draw"
 	"math"
 
-	"github.com/marattttt/paperwork/generator/pattern/color"
+	"github.com/marattttt/paperwork/generator/color"
 )
 
 type Drawing struct {

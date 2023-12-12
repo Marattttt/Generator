@@ -5,7 +5,7 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/marattttt/paperwork/generator/pattern/color"
+	"github.com/marattttt/paperwork/generator/color"
 )
 
 func TestColorConvert(t *testing.T) {

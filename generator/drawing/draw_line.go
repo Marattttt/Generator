@@ -1,7 +1,7 @@
 package drawing
 
 import (
-	"github.com/marattttt/paperwork/generator/pattern/color"
+	"github.com/marattttt/paperwork/generator/color"
 )
 
 // Should not be used to draw straight lines
