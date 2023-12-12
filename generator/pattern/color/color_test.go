@@ -2,6 +2,7 @@ package color_test
 
 import (
 	std_color "image/color"
+	"math/rand"
 	"testing"
 
 	"github.com/marattttt/paperwork/generator/pattern/color"
@@ -26,12 +27,73 @@ func TestColorConvert(t *testing.T) {
 	}
 }
 
-// TODO: write these
 func TestAddNewMarkToGradient(t *testing.T) {
+	col1 := color.ColorFromStdColor(std_color.Black)
+	col2 := color.ColorFromStdColor(std_color.White)
+	grad := color.GradientFromColor(col1)
+
+	newMark := color.GradientMark{
+		Col: col2,
+		Pos: 50,
+	}
+
+	oldMark1 := grad.Marks[0]
+	oldMark2 := grad.Marks[1]
+
+	err := grad.Mark(newMark)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if grad.Marks[0] != oldMark1 || grad.Marks[1] != newMark || grad.Marks[2] != oldMark2 {
+		t.Fatal("Invalid gradient change after adding a mark")
+	}
 }
+
 func TestAddMarkToEmptyGradient(t *testing.T) {
+	col := color.ColorFromStdColor(std_color.Black)
+	grad := color.Gradient{}
+	mark := color.GradientMark{
+		Col: col,
+		Pos: rand.Float32() * 100,
+	}
+
+	err := grad.Mark(mark)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(grad.Marks) != 2 ||
+		grad.Marks[0].Col != col || grad.Marks[0].Pos != 0 ||
+		grad.Marks[1].Col != col || grad.Marks[1].Pos != 100 {
+		t.FailNow()
+	}
 }
+
 func TestEditGradientMark(t *testing.T) {
+	col1 := color.ColorFromStdColor(std_color.Black)
+	col2 := color.ColorFromStdColor(std_color.White)
+	grad := color.GradientFromColor(col1)
+
+	// Add another mark in the middle
+	grad.Mark(color.GradientMark{
+		Col: col1,
+		Pos: 50,
+	})
+
+	newMark := color.GradientMark{
+		Col: col2,
+		Pos: 50,
+	}
+
+	err := grad.Mark(newMark)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(grad.Marks) != 3 || grad.Marks[1] != newMark {
+		t.Fatal("Mark not added successfully")
+	}
 }
 
 func TestColorToGradient(t *testing.T) {

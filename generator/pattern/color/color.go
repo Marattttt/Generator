@@ -28,10 +28,15 @@ func ColorFromStdColor(c std_color.Color) Color {
 	return col
 }
 
-type InvalidGradientMark error
+type InvalidGradientMark struct{}
+
+func (invalidGradient InvalidGradientMark) Error() string {
+	return "Invalid gradient mark"
+}
 
 // Holds an always sorted slice of gradient marks
 // Not thread safe
+// Positions vary from 0 to 100
 type Gradient struct {
 	Marks []GradientMark
 }
@@ -71,10 +76,14 @@ func (g *Gradient) GetGradient() *Gradient {
 }
 
 // Changes an existing one or inserts a new mark to the gradient in ascending order
-func (g *Gradient) Mark(mark GradientMark) {
+func (g *Gradient) Mark(mark GradientMark) error {
+	if mark.Pos < 0 || mark.Pos > 100 {
+		return InvalidGradientMark{}
+	}
+
 	if len(g.Marks) == 0 {
-		g.Marks = []GradientMark{mark}
-		return
+		g.Marks = GradientFromColor(mark.Col).Marks
+		return nil
 	}
 
 	for i, m := range g.Marks {
@@ -84,15 +93,16 @@ func (g *Gradient) Mark(mark GradientMark) {
 
 		if m.Pos == mark.Pos {
 			g.Marks[i] = mark
-			return
+			return nil
 		}
 
 		g.Marks = append(g.Marks[:i+1], g.Marks[i:]...)
 		g.Marks[i] = mark
-		return
+		return nil
 	}
 
 	g.Marks = append(g.Marks, mark)
+	return nil
 }
 
 // Assumes the gradient has at least 2 marks
