@@ -1,11 +1,11 @@
-package pattern
+package drawing
 
 import (
-	"image"
+	"github.com/marattttt/paperwork/generator/pattern/color"
 )
 
 // Should not be used to draw straight lines
-func (d *Drawing) drawDiagonal(line Line, grad Gradienter) {
+func (d *Drawing) drawDiagonal(line Line, grad *color.Gradient) {
 	if !isInBounds(d, line) {
 		return
 	}
@@ -15,10 +15,10 @@ func (d *Drawing) drawDiagonal(line Line, grad Gradienter) {
 	d.drawDiagonalSkewed(skewed, grad)
 }
 
-func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, grad Gradienter) {
+func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, grad *color.Gradient) {
 	startOffset, endOffset := getThicknessOffsets(skewed.thickness)
 
-	plainColor, isPlainColor := grad.(Color)
+	plainColor := grad.ToPlainColor()
 	gradient := grad.GetGradient()
 
 	progressStart := skewed.primaryStart * skewed.secondaryStart
@@ -28,9 +28,9 @@ func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, grad Gradienter) {
 
 	for primary := skewed.primaryStart; primary < skewed.primaryEnd; primary++ {
 		for secondary := secondaryMiddle + startOffset; secondary <= secondaryMiddle+endOffset; secondary++ {
-			var col Color
-			if isPlainColor {
-				col = plainColor
+			var col color.Color
+			if plainColor != nil {
+				col = *plainColor
 			} else {
 				col = gradient.GetMark(progressStart, progressEnd, primary*secondary).Col
 			}
@@ -45,44 +45,7 @@ func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, grad Gradienter) {
 	}
 }
 
-func generateBreaks(line Line, rect image.Rectangle) (breaksAt []int, isXBreaks bool) {
-	drawSize := image.Rect(line.Start.X, line.Start.Y, line.End.X, line.End.Y).Size()
-
-	ratio := float64(drawSize.X) / float64(drawSize.Y)
-
-	length := drawSize.Y
-	isXBreaks = ratio >= 1
-	if isXBreaks {
-		length = drawSize.X
-	}
-
-	// Preallocate extra
-	// Converting ratio to int gives the maximum possible number of elements
-	// with as little extra space as possible
-	// (lowest is length/(int(ratio + 1) + 1))
-	breaks := make([]int, length/int(ratio)+1)
-	current := 0
-	remainder := float64(0)
-	br := 0
-	for ; br < len(breaks) && current < length; br++ {
-		current += int(ratio)
-		if remainder >= 0.5 {
-			current++
-			if remainder >= 1 {
-				remainder -= 1
-			}
-		}
-		// Add break
-		breaks[br] = current
-	}
-
-	// Remove extra elements
-	breaks = append(make([]int, 0), breaks[:br]...)
-
-	return breaks, isXBreaks
-}
-
-func (d *Drawing) drawHorizontal(line Line, grad Gradienter) {
+func (d *Drawing) drawHorizontal(line Line, grad *color.Gradient) {
 	if line.Thickness <= 0 {
 		return
 	}
@@ -126,9 +89,8 @@ func (d *Drawing) drawHorizontal(line Line, grad Gradienter) {
 	yEnd = max(bounds.Min.Y, yEnd)
 	yEnd = min(bounds.Max.Y, yEnd)
 
-	plainCol, isPlainCol := grad.(Color)
-	gradient := grad.GetGradient()
-	if isPlainCol {
+	plainCol := grad.ToPlainColor()
+	if plainCol != nil {
 		for y := yStart; y <= yEnd; y++ {
 			for x := xStart; x <= xEnd; x++ {
 				d.Img.Set(x, y, plainCol)
@@ -137,14 +99,14 @@ func (d *Drawing) drawHorizontal(line Line, grad Gradienter) {
 	} else {
 		for y := yStart; y <= yEnd; y++ {
 			for x := xStart; x <= xEnd; x++ {
-				mark := gradient.GetMark(xStart, xEnd, x)
+				mark := grad.GetMark(xStart, xEnd, x)
 				d.Img.Set(x, y, mark.Col)
 			}
 		}
 	}
 }
 
-func (d *Drawing) drawVertical(line Line, grad Gradienter) {
+func (d *Drawing) drawVertical(line Line, grad *color.Gradient) {
 	if line.Thickness <= 0 {
 		return
 	}
@@ -170,9 +132,8 @@ func (d *Drawing) drawVertical(line Line, grad Gradienter) {
 	xEnd = max(bounds.Min.X, xEnd)
 	xEnd = min(bounds.Max.X, xEnd)
 
-	plainCol, isPlainCol := grad.(Color)
-	gradient := grad.GetGradient()
-	if isPlainCol {
+	plainCol := grad.ToPlainColor()
+	if plainCol != nil {
 		for y := yStart; y <= yEnd; y++ {
 			for x := xStart; x <= xEnd; x++ {
 				d.Img.Set(x, y, plainCol)
@@ -181,7 +142,7 @@ func (d *Drawing) drawVertical(line Line, grad Gradienter) {
 	} else {
 		for y := yStart; y <= yEnd; y++ {
 			for x := xStart; x <= xEnd; x++ {
-				mark := gradient.GetMark(yStart, yEnd, y)
+				mark := grad.GetMark(yStart, yEnd, y)
 				d.Img.Set(x, y, mark.Col)
 			}
 		}

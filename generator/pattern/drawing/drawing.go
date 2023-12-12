@@ -1,9 +1,36 @@
-package pattern
+package drawing
 
 import (
 	"image"
+	"image/draw"
 	"math"
+
+	"github.com/marattttt/paperwork/generator/pattern/color"
 )
+
+type Drawing struct {
+	Img draw.Image
+}
+
+func (d *Drawing) DrawLine(line Line, grad color.Gradient) {
+	isHorizontal := false
+	isVertical := false
+
+	if line.Start.X == line.End.X {
+		isVertical = true
+	}
+	if line.Start.Y == line.End.Y {
+		isHorizontal = true
+	}
+
+	if isHorizontal && !isVertical {
+		d.drawHorizontal(line, &grad)
+	} else if !isHorizontal && isVertical {
+		d.drawVertical(line, &grad)
+	} else {
+		d.drawDiagonal(line, &grad)
+	}
+}
 
 // When used on a Drawing, a line does not have to be fully in bounds of the Drawing to take effect
 // and an a line outside of the bounds does not affect a drawing
