@@ -22,7 +22,7 @@ func TestDrawLineHorizontal(t *testing.T) {
 	}
 
 	col := color.ColorFromStdColor(white)
-	srcDrawing.DrawLine(line, color.GradientFromColor(col))
+	drawing.DrawLine(&srcDrawing, line, color.GradientFromColor(col))
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -57,7 +57,7 @@ func TestDrawLineVertical(t *testing.T) {
 	}
 
 	col := color.ColorFromStdColor(white)
-	srcDrawing.DrawLine(line, color.GradientFromColor(col))
+	drawing.DrawLine(&srcDrawing, line, color.GradientFromColor(col))
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -92,7 +92,7 @@ func TestDrawLineDiagonal(t *testing.T) {
 	}
 
 	col := color.ColorFromStdColor(white)
-	srcDrawing.DrawLine(line, color.GradientFromColor(col))
+	drawing.DrawLine(&srcDrawing, line, color.GradientFromColor(col))
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -124,7 +124,7 @@ func TestDrawLineOutOfBounds(t *testing.T) {
 	}
 
 	col := color.ColorFromStdColor(white)
-	srcDrawing.DrawLine(line, color.GradientFromColor(col))
+	drawing.DrawLine(&srcDrawing, line, color.GradientFromColor(col))
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -146,7 +146,7 @@ func TestDrawLineThick(t *testing.T) {
 	}
 
 	col := color.ColorFromStdColor(white)
-	srcDrawing.DrawLine(line, color.GradientFromColor(col))
+	drawing.DrawLine(&srcDrawing, line, color.GradientFromColor(col))
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -168,7 +168,7 @@ func TestDrawLineZeroThickness(t *testing.T) {
 		Thickness: 0,
 	}
 	col := color.ColorFromStdColor(white)
-	srcDrawing.DrawLine(line, color.GradientFromColor(col))
+	drawing.DrawLine(&srcDrawing, line, color.GradientFromColor(col))
 
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {

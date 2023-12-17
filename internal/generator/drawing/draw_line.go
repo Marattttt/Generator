@@ -4,11 +4,32 @@ import (
 	"github.com/marattttt/paperwork/generator/color"
 )
 
-// Should not be used to draw straight lines
-func (d *Drawing) drawDiagonal(line Line, grad *color.Gradient) {
+func DrawLine(d *Drawing, line Line, grad color.Gradient) {
 	if !isInBounds(d, line) {
 		return
 	}
+
+	isHorizontal := false
+	isVertical := false
+
+	if line.Start.X == line.End.X {
+		isVertical = true
+	}
+	if line.Start.Y == line.End.Y {
+		isHorizontal = true
+	}
+
+	if isHorizontal && !isVertical {
+		d.drawHorizontal(line, &grad)
+	} else if !isHorizontal && isVertical {
+		d.drawVertical(line, &grad)
+	} else {
+		d.drawDiagonal(line, &grad)
+	}
+}
+
+// Should not be used to draw straight lines
+func (d *Drawing) drawDiagonal(line Line, grad *color.Gradient) {
 
 	skewed := line.toSkewed()
 

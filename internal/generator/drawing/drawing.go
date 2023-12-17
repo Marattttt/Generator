@@ -4,32 +4,10 @@ import (
 	"image"
 	"image/draw"
 	"math"
-
-	"github.com/marattttt/paperwork/generator/color"
 )
 
 type Drawing struct {
 	Img draw.Image
-}
-
-func (d *Drawing) DrawLine(line Line, grad color.Gradient) {
-	isHorizontal := false
-	isVertical := false
-
-	if line.Start.X == line.End.X {
-		isVertical = true
-	}
-	if line.Start.Y == line.End.Y {
-		isHorizontal = true
-	}
-
-	if isHorizontal && !isVertical {
-		d.drawHorizontal(line, &grad)
-	} else if !isHorizontal && isVertical {
-		d.drawVertical(line, &grad)
-	} else {
-		d.drawDiagonal(line, &grad)
-	}
 }
 
 // When used on a Drawing, a line does not have to be fully in bounds of the Drawing to take effect
@@ -71,6 +49,30 @@ func (l Line) toSkewed() skewedLine {
 	return skewed
 }
 
+// Returns the rectanlgle of bounds in which the line is drawn
+// In general, returns more area than needed
+func (l1 Line) IsIntersectingWith(l2 Line) bool {
+	if l1.Start == l2.Start || l1.Start == l2.End ||
+		l1.End == l2.Start || l2.End == l2.End {
+		return false
+	}
+
+	isCrossingX := (l1.Start.X < l2.Start.X) != (l1.End.X < l2.Start.X)
+	isCrossingY := (l1.Start.Y < l2.Start.Y) != (l1.End.Y < l2.End.Y)
+	if isCrossingX && isCrossingY {
+		return false
+	}
+
+	area1 := l1.affectedArea()
+	area2 := l2.affectedArea()
+
+	if (area1.Intersect(area2) != image.Rectangle{}) {
+		return false
+	}
+
+	return true
+}
+
 // gives a negative or zero offset for start and a positive or zero offset for end
 // usage: start += startOffset; end += endOffset
 func getThicknessOffsets(thickness int) (start, end int) {
@@ -82,6 +84,25 @@ func getThicknessOffsets(thickness int) (start, end int) {
 	return startOffset, endOffset
 }
 
+func (l Line) affectedArea() image.Rectangle {
+	skewed := l.toSkewed()
+	var rect image.Rectangle
+	startOffset, endOffset := getThicknessOffsets(skewed.thickness)
+
+	if skewed.isSkewedX {
+		rect.Min.X = skewed.primaryStart
+		rect.Min.Y = skewed.secondaryStart + startOffset
+		rect.Max.X = skewed.primaryEnd
+		rect.Max.Y = skewed.secondaryEnd + endOffset
+	} else {
+		rect.Min.Y = skewed.primaryStart
+		rect.Min.X = skewed.secondaryStart + startOffset
+		rect.Max.Y = skewed.primaryEnd
+		rect.Max.X = skewed.secondaryEnd + endOffset
+	}
+
+	return rect
+}
 func isInBounds(d *Drawing, line Line) bool {
 	bounds := d.Img.Bounds()
 	containsStart := bounds.Min.X <= line.Start.X &&
