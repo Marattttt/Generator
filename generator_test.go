@@ -6,9 +6,10 @@ import (
 	"image/draw"
 	"testing"
 
-	"github.com/marattttt/paperwork/generator"
-	"github.com/marattttt/paperwork/generator/color"
-	"github.com/marattttt/paperwork/generator/drawing"
+	"github.com/marattttt/generator"
+	"github.com/marattttt/generator/color"
+	"github.com/marattttt/generator/command"
+	"github.com/marattttt/generator/drawing"
 )
 
 func TestNoSideEffects(t *testing.T) {
@@ -31,12 +32,12 @@ func TestNoSideEffects(t *testing.T) {
 	gen := generator.Generator{
 		Target: &targetGenerator,
 	}
-	gen.Commands = []generator.Command{
-		generator.DrawLineCommand{
+	gen.Commands = []command.Command{
+		command.DrawLineCommand{
 			Line: line1,
 			Grad: gradWhite,
 		},
-		generator.DrawLineCommand{
+		command.DrawLineCommand{
 			Line: line2,
 			Grad: gradWhite,
 		},
@@ -71,15 +72,17 @@ func TestCyclesNumber(t *testing.T) {
 		End:       image.Point{100, 0},
 		Thickness: 3,
 	}
-	command := generator.DrawLineCommand{
+
+	comm := command.DrawLineCommand{
 		Line: line,
 		Grad: gradWhite,
 	}
 
-	commands := []generator.Command{
-		command, command, command, command,
+	commands := []command.Command{
+		comm, comm, comm, comm,
 	}
-	commandsCopy := make([]generator.Command, len(commands))
+
+	commandsCopy := make([]command.Command, len(commands))
 	copy(commandsCopy, commands)
 
 	gen.Commands = commands

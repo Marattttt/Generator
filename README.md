@@ -1,5 +1,9 @@
-# Paperwork - an easy tool to generate new wallpapers 
+# Generator 
 
 in development
 
-A CLI/HTTP utility to create random desktop wallpapers from patterns fully written in golang with minimal dependencies and good-enough test-coverage
+A Go library for easy drawing over (std) image.Image type
+
+Adds support for drawing lines and uses gradients!
+Use the main package to save commmands and apply them at some point utilizing multiple threads or use the underlying packages directly
+

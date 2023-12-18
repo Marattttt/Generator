@@ -1,10 +1,10 @@
-package generator
+package command
 
 import (
 	"image"
 
-	"github.com/marattttt/paperwork/generator/color"
-	"github.com/marattttt/paperwork/generator/drawing"
+	"github.com/marattttt/generator/color"
+	"github.com/marattttt/generator/drawing"
 )
 
 type Command interface {
@@ -27,7 +27,7 @@ func (c DrawLineCommand) GetAffectedArea() image.Rectangle {
 	return c.Line.GetAffectedArea()
 }
 
-func filterRelatedCommands(unfiltered []Command) (filtered, left []Command) {
+func FilterRelatedCommands(unfiltered []Command) (filtered, left []Command) {
 	filtered = make([]Command, 0)
 	left = make([]Command, 0)
 

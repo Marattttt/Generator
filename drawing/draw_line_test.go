@@ -6,8 +6,8 @@ import (
 	"image/draw"
 	"testing"
 
-	"github.com/marattttt/paperwork/generator/color"
-	"github.com/marattttt/paperwork/generator/drawing"
+	"github.com/marattttt/generator/color"
+	"github.com/marattttt/generator/drawing"
 )
 
 func TestDrawLineHorizontal(t *testing.T) {

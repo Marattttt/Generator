@@ -1,7 +1,7 @@
 package drawing
 
 import (
-	"github.com/marattttt/paperwork/generator/color"
+	"github.com/marattttt/generator/color"
 )
 
 func DrawLine(d *Drawing, line Line, grad color.Gradient) {
