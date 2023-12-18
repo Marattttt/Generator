@@ -71,10 +71,6 @@ type GradientMark struct {
 	Pos float32
 }
 
-func (g *Gradient) GetGradient() *Gradient {
-	return g
-}
-
 // Changes an existing one or inserts a new mark to the gradient in ascending order
 func (g *Gradient) Mark(mark GradientMark) error {
 	if mark.Pos < 0 || mark.Pos > 100 {

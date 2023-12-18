@@ -6,6 +6,8 @@ import (
 	"math"
 )
 
+//TODO: create shape interface to use instead of line
+
 type Drawing struct {
 	Img draw.Image
 }
@@ -63,8 +65,8 @@ func (l1 Line) IsIntersectingWith(l2 Line) bool {
 		return false
 	}
 
-	area1 := l1.affectedArea()
-	area2 := l2.affectedArea()
+	area1 := l1.GetAffectedArea()
+	area2 := l2.GetAffectedArea()
 
 	if (area1.Intersect(area2) != image.Rectangle{}) {
 		return false
@@ -84,7 +86,7 @@ func getThicknessOffsets(thickness int) (start, end int) {
 	return startOffset, endOffset
 }
 
-func (l Line) affectedArea() image.Rectangle {
+func (l Line) GetAffectedArea() image.Rectangle {
 	skewed := l.toSkewed()
 	var rect image.Rectangle
 	startOffset, endOffset := getThicknessOffsets(skewed.thickness)

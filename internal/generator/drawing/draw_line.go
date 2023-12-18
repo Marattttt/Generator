@@ -36,11 +36,10 @@ func (d *Drawing) drawDiagonal(line Line, grad *color.Gradient) {
 	d.drawDiagonalSkewed(skewed, grad)
 }
 
-func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, grad *color.Gradient) {
+func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, gradient *color.Gradient) {
 	startOffset, endOffset := getThicknessOffsets(skewed.thickness)
 
-	plainColor := grad.ToPlainColor()
-	gradient := grad.GetGradient()
+	plainColor := gradient.ToPlainColor()
 
 	progressStart := skewed.primaryStart * skewed.secondaryStart
 	progressEnd := skewed.primaryEnd * skewed.primaryStart
