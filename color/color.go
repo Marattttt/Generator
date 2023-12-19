@@ -1,7 +1,9 @@
 package color
 
 import (
+	"fmt"
 	std_color "image/color"
+	"math"
 )
 
 type Color struct {
@@ -115,7 +117,7 @@ func (g *Gradient) GetMark(start, end, pos int) GradientMark {
 		return g.Marks[0]
 	}
 
-	progress := float32(pos-start) / float32(end-start)
+	progress := float32(math.Abs(float64(pos-start) / float64(end-start)))
 
 	for i := 1; i < len(g.Marks); i++ {
 		if g.Marks[i-1].Pos <= progress && g.Marks[i].Pos >= progress {
@@ -130,14 +132,22 @@ func (g *Gradient) GetMark(start, end, pos int) GradientMark {
 	return g.Marks[len(g.Marks)-1]
 }
 
+var i int = 0
+
 func blendLinear(g *Gradient, index int, progress float32) Color {
 	left := g.Marks[index-1].Col
 	right := g.Marks[index].Col
 
-	resR := left.R + uint16(progress-g.Marks[index-1].Pos*float32(right.R))
-	resG := left.G + uint16(progress-g.Marks[index-1].Pos*float32(right.G))
-	resB := left.B + uint16(progress-g.Marks[index-1].Pos*float32(right.B))
-	resA := left.A + uint16(progress-g.Marks[index-1].Pos*float32(right.A))
+	resR := (left.R + uint16(progress-g.Marks[index-1].Pos*float32(right.R))) / 2
+	resG := (left.G + uint16(progress-g.Marks[index-1].Pos*float32(right.G))) / 2
+	resB := (left.B + uint16(progress-g.Marks[index-1].Pos*float32(right.B))) / 2
+	resA := (left.A + uint16(progress-g.Marks[index-1].Pos*float32(right.A))) / 2
+
+	i++
+	if i%300 == 0 {
+		fmt.Println(resR, resG, resB, resA)
+		fmt.Println("index, progress:", index, progress)
+	}
 
 	return Color{R: resR, G: resG, B: resB, A: resA}
 }

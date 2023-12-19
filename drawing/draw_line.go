@@ -41,8 +41,8 @@ func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, gradient *color.Gradient
 
 	plainColor := gradient.ToPlainColor()
 
-	progressStart := skewed.primaryStart * skewed.secondaryStart
-	progressEnd := skewed.primaryEnd * skewed.primaryStart
+	progressStart := skewed.primaryStart + skewed.secondaryStart
+	progressEnd := skewed.primaryEnd + skewed.primaryStart
 
 	secondaryMiddle := skewed.secondaryStart
 
@@ -52,7 +52,7 @@ func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, gradient *color.Gradient
 			if plainColor != nil {
 				col = *plainColor
 			} else {
-				col = gradient.GetMark(progressStart, progressEnd, primary*secondary).Col
+				col = gradient.GetMark(progressStart, progressEnd, primary+secondary).Col
 			}
 
 			if skewed.isSkewedX {
