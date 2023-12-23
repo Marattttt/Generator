@@ -34,7 +34,7 @@ func TestAddNewMarkToGradient(t *testing.T) {
 
 	newMark := color.GradientMark{
 		Col: col2,
-		Pos: 50,
+		Pos: 0.5,
 	}
 
 	oldMark1 := grad.Marks[0]
@@ -42,11 +42,15 @@ func TestAddNewMarkToGradient(t *testing.T) {
 
 	err := grad.Mark(newMark)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal("eeheh")
+	}
+
+	if len(grad.Marks) != 3 {
+		t.Fatalf("Invalid gradient marks count; \nExpected: 3; \nGot: %d", len(grad.Marks))
 	}
 
 	if grad.Marks[0] != oldMark1 || grad.Marks[1] != newMark || grad.Marks[2] != oldMark2 {
-		t.Fatal("Invalid gradient change after adding a mark")
+		t.Fatalf("Invalid gradient change after adding a mark \nExpected: %v, %v; \nGot: %v, %v", oldMark1, oldMark2, grad.Marks[0], grad.Marks[1])
 	}
 }
 
@@ -55,7 +59,7 @@ func TestAddMarkToEmptyGradient(t *testing.T) {
 	grad := color.Gradient{}
 	mark := color.GradientMark{
 		Col: col,
-		Pos: rand.Float32() * 100,
+		Pos: rand.Float32(),
 	}
 
 	err := grad.Mark(mark)
@@ -65,8 +69,8 @@ func TestAddMarkToEmptyGradient(t *testing.T) {
 
 	if len(grad.Marks) != 2 ||
 		grad.Marks[0].Col != col || grad.Marks[0].Pos != 0 ||
-		grad.Marks[1].Col != col || grad.Marks[1].Pos != 100 {
-		t.FailNow()
+		grad.Marks[1].Col != col || grad.Marks[1].Pos != 1 {
+		t.Fatalf("Expected plain color gradient; \nGot: %v", grad.Marks)
 	}
 }
 
@@ -78,12 +82,12 @@ func TestEditGradientMark(t *testing.T) {
 	// Add another mark in the middle
 	grad.Mark(color.GradientMark{
 		Col: col1,
-		Pos: 50,
+		Pos: 0.5,
 	})
 
 	newMark := color.GradientMark{
 		Col: col2,
-		Pos: 50,
+		Pos: 0.5,
 	}
 
 	err := grad.Mark(newMark)
@@ -105,7 +109,7 @@ func TestColorToGradient(t *testing.T) {
 		t.Fatalf("Invalid length of plain color gradient. \nColor: %v; \ngradient: %v", white, gradient)
 	}
 
-	if gradient.Marks[0].Pos != 0 || gradient.Marks[1].Pos != 100 {
+	if gradient.Marks[0].Pos != 0 || gradient.Marks[1].Pos != 1 {
 		t.Fatalf("Invalid positions of marks in plain color gradient %v", gradient)
 	}
 

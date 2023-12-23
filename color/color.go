@@ -6,6 +6,7 @@ import (
 	"math"
 )
 
+// All values are alpha-premultiplied
 type Color struct {
 	R, G, B, A uint16
 }
@@ -37,10 +38,14 @@ func (invalidGradient InvalidGradientMark) Error() string {
 }
 
 // Holds an always sorted slice of gradient marks
-// Not thread safe
-// Positions vary from 0 to 100
+// Positions vary from 0 to 1
 type Gradient struct {
 	Marks []GradientMark
+}
+
+type GradientMark struct {
+	Col Color
+	Pos float32
 }
 
 // Flat gradient of the color passed
@@ -53,7 +58,7 @@ func GradientFromColor(col Color) Gradient {
 			},
 			{
 				Col: col,
-				Pos: 100,
+				Pos: 1,
 			},
 		},
 	}
@@ -61,21 +66,22 @@ func GradientFromColor(col Color) Gradient {
 	return g
 }
 
+// If a gradient is not a plain color gradient, nil is returned
+// Does a linear check
 func (g Gradient) ToPlainColor() *Color {
-	if len(g.Marks) == 2 && g.Marks[0].Col == g.Marks[1].Col {
-		return &(g.Marks[0].Col)
+	colStart := g.Marks[0]
+	for i := 1; i < len(g.Marks); i++ {
+		if g.Marks[i].Col != colStart.Col {
+			return nil
+		}
 	}
-	return nil
-}
 
-type GradientMark struct {
-	Col Color
-	Pos float32
+	return &(g.Marks[0].Col)
 }
 
 // Changes an existing one or inserts a new mark to the gradient in ascending order
 func (g *Gradient) Mark(mark GradientMark) error {
-	if mark.Pos < 0 || mark.Pos > 100 {
+	if mark.Pos < 0 || mark.Pos > 1 {
 		return InvalidGradientMark{}
 	}
 
@@ -103,12 +109,16 @@ func (g *Gradient) Mark(mark GradientMark) error {
 	return nil
 }
 
+var i1 int = 0
+
 // Assumes the gradient has at least 2 marks
 func (g *Gradient) GetMark(start, end, pos int) GradientMark {
 	if pos <= start {
 		return g.Marks[0]
 	}
 	if pos >= end {
+		i1++
+		fmt.Println("ehehh ", i1)
 		return g.Marks[len(g.Marks)-1]
 	}
 
@@ -132,22 +142,29 @@ func (g *Gradient) GetMark(start, end, pos int) GradientMark {
 	return g.Marks[len(g.Marks)-1]
 }
 
-var i int = 0
-
 func blendLinear(g *Gradient, index int, progress float32) Color {
-	left := g.Marks[index-1].Col
-	right := g.Marks[index].Col
+	left := g.Marks[index-1]
+	right := g.Marks[index]
 
-	resR := (left.R + uint16(progress-g.Marks[index-1].Pos*float32(right.R))) / 2
-	resG := (left.G + uint16(progress-g.Marks[index-1].Pos*float32(right.G))) / 2
-	resB := (left.B + uint16(progress-g.Marks[index-1].Pos*float32(right.B))) / 2
-	resA := (left.A + uint16(progress-g.Marks[index-1].Pos*float32(right.A))) / 2
+	leftScale := right.Pos - progress
+	rightScale := progress - left.Pos
 
-	i++
-	if i%300 == 0 {
-		fmt.Println(resR, resG, resB, resA)
-		fmt.Println("index, progress:", index, progress)
-	}
+	resR := blend2Vals(left.Col.R, right.Col.R, leftScale, rightScale)
+	resG := blend2Vals(left.Col.G, right.Col.G, leftScale, rightScale)
+	resB := blend2Vals(left.Col.B, right.Col.B, leftScale, rightScale)
+	resA := blend2Vals(left.Col.A, right.Col.A, leftScale, rightScale)
 
 	return Color{R: resR, G: resG, B: resB, A: resA}
+}
+
+func blend2Vals(leftVal, rightVal uint16, leftScale, rightScale float32) uint16 {
+	if leftVal == rightVal {
+		return leftVal
+	}
+
+	totalScaled := leftScale + rightScale
+	leftScaled := float32(leftVal) * leftScale
+	rightScaled := float32(rightVal) * rightScale
+
+	return uint16((leftScaled + rightScaled) / totalScaled)
 }

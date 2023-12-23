@@ -36,13 +36,14 @@ func (d *Drawing) drawDiagonal(line Line, grad *color.Gradient) {
 	d.drawDiagonalSkewed(skewed, grad)
 }
 
+// Thickness is applied the secondary axis
 func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, gradient *color.Gradient) {
 	startOffset, endOffset := getThicknessOffsets(skewed.thickness)
 
 	plainColor := gradient.ToPlainColor()
 
-	progressStart := skewed.primaryStart + skewed.secondaryStart
-	progressEnd := skewed.primaryEnd + skewed.primaryStart
+	progressStart := skewed.primaryStart + skewed.secondaryStart + startOffset
+	progressEnd := skewed.primaryEnd + skewed.secondaryEnd + endOffset
 
 	secondaryMiddle := skewed.secondaryStart
 
