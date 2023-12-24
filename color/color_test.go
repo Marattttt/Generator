@@ -40,7 +40,7 @@ func TestAddNewMarkToGradient(t *testing.T) {
 	oldMark1 := grad.Marks[0]
 	oldMark2 := grad.Marks[1]
 
-	err := grad.Mark(newMark)
+	err := grad.SetMark(newMark)
 	if err != nil {
 		t.Fatal("eeheh")
 	}
@@ -62,7 +62,7 @@ func TestAddMarkToEmptyGradient(t *testing.T) {
 		Pos: rand.Float32(),
 	}
 
-	err := grad.Mark(mark)
+	err := grad.SetMark(mark)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestEditGradientMark(t *testing.T) {
 	grad := color.GradientFromColor(col1)
 
 	// Add another mark in the middle
-	grad.Mark(color.GradientMark{
+	grad.SetMark(color.GradientMark{
 		Col: col1,
 		Pos: 0.5,
 	})
@@ -90,7 +90,7 @@ func TestEditGradientMark(t *testing.T) {
 		Pos: 0.5,
 	}
 
-	err := grad.Mark(newMark)
+	err := grad.SetMark(newMark)
 	if err != nil {
 		t.Fatal(err)
 	}

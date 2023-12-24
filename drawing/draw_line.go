@@ -56,10 +56,15 @@ func (d *Drawing) drawDiagonalSkewed(skewed skewedLine, gradient *color.Gradient
 				col = gradient.GetMark(progressStart, progressEnd, primary+secondary).Col
 			}
 
+			var newCol color.Color
+
 			if skewed.isSkewedX {
-				d.Img.Set(primary, secondary, col)
+				newCol = col.BlendWith(color.ColorFromStdColor(d.Img.At(primary, secondary)))
+				d.Img.Set(primary, secondary, newCol)
+
 			} else {
-				d.Img.Set(secondary, primary, col)
+				newCol = col.BlendWith(color.ColorFromStdColor(d.Img.At(secondary, primary)))
+				d.Img.Set(secondary, primary, newCol)
 			}
 		}
 		secondaryMiddle++

@@ -20,6 +20,49 @@ func (c Color) RGBA() (r, g, b, a uint32) {
 	return r, g, b, a
 }
 
+var i int
+
+func (c1 Color) BlendWith(c2 Color) Color {
+	if c1.A == math.MaxUint16 || c2.A == 0 {
+		return c1
+	}
+	if c1.A == 0 {
+		return c2
+	}
+
+	var resR, resG, resB, resA uint16
+	// R G B A
+
+	if math.MaxUint16-c1.R > c2.R*c2.A {
+		resR = c1.R + c2.R*c2.A
+	} else {
+		resR = math.MaxUint16
+	}
+
+	if math.MaxUint16-c1.G > c2.G*c2.A {
+		resG = c1.G + c2.G*c2.A
+	} else {
+		resG = math.MaxUint16
+	}
+
+	if math.MaxUint16-c1.B > c2.B*c2.A {
+		resB = c1.B + c2.B*c2.A
+	} else {
+		resB = math.MaxUint16
+	}
+
+	resA = max(c1.A, c2.A)
+
+	res := Color{resR, resG, resB, uint16(resA)}
+
+	i++
+	if i%300 == 0 {
+		fmt.Println(c1, c2, res)
+	}
+
+	return res
+}
+
 func ColorFromStdColor(c std_color.Color) Color {
 	r, g, b, a := c.RGBA()
 	R := uint16(r)
@@ -80,7 +123,7 @@ func (g Gradient) ToPlainColor() *Color {
 }
 
 // Changes an existing one or inserts a new mark to the gradient in ascending order
-func (g *Gradient) Mark(mark GradientMark) error {
+func (g *Gradient) SetMark(mark GradientMark) error {
 	if mark.Pos < 0 || mark.Pos > 1 {
 		return InvalidGradientMark{}
 	}
@@ -109,16 +152,12 @@ func (g *Gradient) Mark(mark GradientMark) error {
 	return nil
 }
 
-var i1 int = 0
-
 // Assumes the gradient has at least 2 marks
 func (g *Gradient) GetMark(start, end, pos int) GradientMark {
 	if pos <= start {
 		return g.Marks[0]
 	}
 	if pos >= end {
-		i1++
-		fmt.Println("ehehh ", i1)
 		return g.Marks[len(g.Marks)-1]
 	}
 
@@ -131,7 +170,7 @@ func (g *Gradient) GetMark(start, end, pos int) GradientMark {
 
 	for i := 1; i < len(g.Marks); i++ {
 		if g.Marks[i-1].Pos <= progress && g.Marks[i].Pos >= progress {
-			col := blendLinear(g, i, progress)
+			col := blendMarks(g.Marks[i-1], g.Marks[i], progress)
 			return GradientMark{
 				Pos: progress,
 				Col: col,
@@ -142,10 +181,7 @@ func (g *Gradient) GetMark(start, end, pos int) GradientMark {
 	return g.Marks[len(g.Marks)-1]
 }
 
-func blendLinear(g *Gradient, index int, progress float32) Color {
-	left := g.Marks[index-1]
-	right := g.Marks[index]
-
+func blendMarks(left, right GradientMark, progress float32) Color {
 	leftScale := right.Pos - progress
 	rightScale := progress - left.Pos
 
